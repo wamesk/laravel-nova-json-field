@@ -28,6 +28,17 @@
                                 <svg class="shrink-0 pointer-events-none absolute text-gray-700 right-[11px] top-[15px] alternative-component-icon-arrow" xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path class="fill-current" d="M8.292893.292893c.390525-.390524 1.023689-.390524 1.414214 0 .390524.390525.390524 1.023689 0 1.414214l-4 4c-.390525.390524-1.023689.390524-1.414214 0l-4-4c-.390524-.390525-.390524-1.023689 0-1.414214.390525-.390524 1.023689-.390524 1.414214 0L5 3.585786 8.292893.292893z"></path></svg>
                             </div>
                         </template>
+                        <template v-if="parameterField.type === 'checkbox'">
+                            <input
+                                type="checkbox"
+                                class="checkbox"
+                                :disabled="disabled"
+                                :checked="checked"
+                                v-model="parameterField.value"
+                                @change="handleChange"
+                                @click.stop
+                            />
+                        </template>
                         <template v-else>
                             <input
                                 :id="parameterField.name"
@@ -88,13 +99,20 @@ export default {
                         if (model.fields[j].type === 'select') {
                             model.fields[j].value = null
                         }
+                        if (model.fields[j].type === 'checkbox') {
+                            model.fields[j].value = false
+                        }
 
                         let modelValue = originalValues?.[model.id];
+
+                        console.log('model', model)
+                        console.log('modelValue', modelValue)
+                        console.log('originalValues', originalValues)
 
                         let value = undefined
 
                         if (isString(modelValue)) {
-                            value = JSON.parse(modelValue)?.[model.fields[j].name]
+                            value = JSON.parse(modelValue)?.[model.fields[j].id]
                         }
 
                         if (value !== undefined) {
@@ -118,9 +136,12 @@ export default {
                 if (fields[i].type === 'select') {
                     fields[i].value = null
                 }
+                if (fields[i].type === 'checkbox') {
+                    fields[i].value = false
+                }
 
-                if (originalValues !== null && originalValues[fields[i].name] !== undefined) {
-                    fields[i].value = originalValues[fields[i].name]
+                if (originalValues !== null && originalValues[fields[i].id] !== undefined) {
+                    fields[i].value = originalValues[fields[i].id]
                 }
             }
 
@@ -138,12 +159,13 @@ export default {
                 let section = this.sections[i];
 
                 data[i] = {
-                    id: section.id
+                    sectionId: section.id,
+                    sectionName: section.name,
                 }
                 for (let j = 0; j < section.fields.length; j++) {
                     let field = section.fields[j]
 
-                    data[i][field.name] = field.value
+                    data[i][field.id] = field.value
                 }
             }
 

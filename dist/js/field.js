@@ -55,10 +55,10 @@ __webpack_require__.r(__webpack_exports__);
         value = JSON.parse(value);
       }
       if (!this.currentField.asModels) {
-        new_field.value = value[field.name];
+        new_field.value = value[field.id];
       }
       if (this.currentField.asModels) {
-        value = JSON.parse(value[sectionId])[field.name];
+        value = JSON.parse(value[sectionId])[field.id];
         new_field.value = value;
       }
       return new_field;
@@ -113,11 +113,17 @@ __webpack_require__.r(__webpack_exports__);
             if (model.fields[j].type === 'select') {
               model.fields[j].value = null;
             }
+            if (model.fields[j].type === 'checkbox') {
+              model.fields[j].value = false;
+            }
             var modelValue = (_originalValues = originalValues) === null || _originalValues === void 0 ? void 0 : _originalValues[model.id];
+            console.log('model', model);
+            console.log('modelValue', modelValue);
+            console.log('originalValues', originalValues);
             var value = undefined;
             if ((0,lodash__WEBPACK_IMPORTED_MODULE_1__.isString)(modelValue)) {
               var _JSON$parse;
-              value = (_JSON$parse = JSON.parse(modelValue)) === null || _JSON$parse === void 0 ? void 0 : _JSON$parse[model.fields[j].name];
+              value = (_JSON$parse = JSON.parse(modelValue)) === null || _JSON$parse === void 0 ? void 0 : _JSON$parse[model.fields[j].id];
             }
             if (value !== undefined) {
               model.fields[j].value = value;
@@ -137,8 +143,11 @@ __webpack_require__.r(__webpack_exports__);
         if (fields[_i].type === 'select') {
           fields[_i].value = null;
         }
-        if (originalValues !== null && originalValues[fields[_i].name] !== undefined) {
-          fields[_i].value = originalValues[fields[_i].name];
+        if (fields[_i].type === 'checkbox') {
+          fields[_i].value = false;
+        }
+        if (originalValues !== null && originalValues[fields[_i].id] !== undefined) {
+          fields[_i].value = originalValues[fields[_i].id];
         }
       }
       sections.push({
@@ -153,11 +162,12 @@ __webpack_require__.r(__webpack_exports__);
       for (var i = 0; i < this.sections.length; i++) {
         var section = this.sections[i];
         data[i] = {
-          id: section.id
+          sectionId: section.id,
+          sectionName: section.name
         };
         for (var j = 0; j < section.fields.length; j++) {
           var field = section.fields[j];
-          data[i][field.name] = field.value;
+          data[i][field.id] = field.value;
         }
       }
       if (!this.currentField.asModels) {
@@ -273,9 +283,10 @@ var _hoisted_4 = {
 var _hoisted_5 = ["id", "onUpdate:modelValue", "required"];
 var _hoisted_6 = ["disabled"];
 var _hoisted_7 = ["value"];
-var _hoisted_8 = ["id", "type", "onUpdate:modelValue", "required", "placeholder"];
-var _hoisted_9 = {
-  key: 2,
+var _hoisted_8 = ["disabled", "checked", "onUpdate:modelValue"];
+var _hoisted_9 = ["id", "type", "onUpdate:modelValue", "required", "placeholder"];
+var _hoisted_10 = {
+  key: 3,
   "class": "my-2 text-danger"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -302,7 +313,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("option", {
               value: option.value
             }, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(option.label), 9 /* TEXT, PROPS */, _hoisted_7);
-          }), 256 /* UNKEYED_FRAGMENT */))], 8 /* PROPS */, _hoisted_5), [[vue__WEBPACK_IMPORTED_MODULE_0__.vModelSelect, parameterField.value]]), _cache[0] || (_cache[0] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("svg", {
+          }), 256 /* UNKEYED_FRAGMENT */))], 8 /* PROPS */, _hoisted_5), [[vue__WEBPACK_IMPORTED_MODULE_0__.vModelSelect, parameterField.value]]), _cache[2] || (_cache[2] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("svg", {
             "class": "shrink-0 pointer-events-none absolute text-gray-700 right-[11px] top-[15px] alternative-component-icon-arrow",
             xmlns: "http://www.w3.org/2000/svg",
             width: "10",
@@ -311,8 +322,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("path", {
             "class": "fill-current",
             d: "M8.292893.292893c.390525-.390524 1.023689-.390524 1.414214 0 .390524.390525.390524 1.023689 0 1.414214l-4 4c-.390525.390524-1.023689.390524-1.414214 0l-4-4c-.390524-.390525-.390524-1.023689 0-1.414214.390525-.390524 1.023689-.390524 1.414214 0L5 3.585786 8.292893.292893z"
-          })], -1 /* HOISTED */))])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.withDirectives)(((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("input", {
+          })], -1 /* HOISTED */))])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), parameterField.type === 'checkbox' ? (0,vue__WEBPACK_IMPORTED_MODULE_0__.withDirectives)(((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("input", {
             key: 1,
+            type: "checkbox",
+            "class": "checkbox",
+            disabled: _ctx.disabled,
+            checked: _ctx.checked,
+            "onUpdate:modelValue": function onUpdateModelValue($event) {
+              return parameterField.value = $event;
+            },
+            onChange: _cache[0] || (_cache[0] = function () {
+              return _ctx.handleChange && _ctx.handleChange.apply(_ctx, arguments);
+            }),
+            onClick: _cache[1] || (_cache[1] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function () {}, ["stop"]))
+          }, null, 40 /* PROPS, NEED_HYDRATION */, _hoisted_8)), [[vue__WEBPACK_IMPORTED_MODULE_0__.vModelCheckbox, parameterField.value]]) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.withDirectives)(((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("input", {
+            key: 2,
             id: parameterField.name,
             type: parameterField.type,
             "class": (0,vue__WEBPACK_IMPORTED_MODULE_0__.normalizeClass)(["w-full form-control form-input form-control-bordered", _ctx.errorClasses]),
@@ -321,7 +345,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             },
             required: parameterField.required,
             placeholder: parameterField.placeholder
-          }, null, 10 /* CLASS, PROPS */, _hoisted_8)), [[vue__WEBPACK_IMPORTED_MODULE_0__.vModelDynamic, parameterField.value]]), _ctx.hasError ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("p", _hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(_ctx.firstError), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)];
+          }, null, 10 /* CLASS, PROPS */, _hoisted_9)), [[vue__WEBPACK_IMPORTED_MODULE_0__.vModelDynamic, parameterField.value]]), _ctx.hasError ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("p", _hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(_ctx.firstError), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)];
         }),
         _: 2 /* DYNAMIC */
       }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["field", "fieldName", "errors"])]);

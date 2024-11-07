@@ -62,11 +62,11 @@ export default {
             }
 
             if (!this.currentField.asModels) {
-                new_field.value = value[field.name]
+                new_field.value = value[field.id]
             }
 
             if (this.currentField.asModels) {
-                value = JSON.parse(value[sectionId])[field.name]
+                value = JSON.parse(value[sectionId])[field.id]
 
                 new_field.value = value
             }

@@ -2,11 +2,13 @@
 
 namespace Wame\LaravelNovaJsonField\Fields;
 
+use JsonException;
 use Laravel\Nova\Exceptions\HelperNotSupported;
 use Laravel\Nova\Exceptions\NovaException;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Fields\ResourceRelationshipGuesser;
 use Laravel\Nova\Fields\SupportsDependentFields;
+use Laravel\Nova\Http\Requests\NovaRequest;
 
 class Json extends Field
 {
@@ -44,7 +46,24 @@ class Json extends Field
         $this->withMeta([
             'fields' => [],
             'asModels' => false,
+            'repeatable' => false,
         ]);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function fill(NovaRequest $request, $model): void
+    {
+        $attribute = $this->attribute;
+
+        $value = $request->input($attribute);
+
+        $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+
+        unset($model->$attribute);
+
+        $model->$attribute = $value;
     }
 
     /**
@@ -71,5 +90,12 @@ class Json extends Field
     public function models(?array $models): self
     {
         return $this->setData($models, true);
+    }
+
+    public function repeatable(bool $repeatable = true): self
+    {
+        return $this->withMeta([
+            'repeatable' => $repeatable,
+        ]);
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="loaded && fields.length > 0">
         <div v-for="(section, sectionIndex) in sections">
             <div v-if="section.name" class="flex flex-col md:flex-row alternative-component-field-wrapper alternative-component-form-heading-field alternative-field-asdads alternative-resource-devices" errors="[object Object]">
                 <div class="remove-last-margin-bottom leading-normal w-full py-4 px-8">
@@ -15,7 +15,7 @@
                             <div class="flex relative w-full alternative-component-select-control">
                                 <select
                                     :id="parameterField.name"
-                                    v-model="parameterField.value"
+                                    v-model="value[section.id || sectionIndex][parameterField.id]"
                                     :required="parameterField.required"
                                     class="w-full block form-control form-control-bordered form-input"
                                 >
@@ -28,14 +28,11 @@
                                 <svg class="shrink-0 pointer-events-none absolute text-gray-700 right-[11px] top-[15px] alternative-component-icon-arrow" xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path class="fill-current" d="M8.292893.292893c.390525-.390524 1.023689-.390524 1.414214 0 .390524.390525.390524 1.023689 0 1.414214l-4 4c-.390525.390524-1.023689.390524-1.414214 0l-4-4c-.390524-.390525-.390524-1.023689 0-1.414214.390525-.390524 1.023689-.390524 1.414214 0L5 3.585786 8.292893.292893z"></path></svg>
                             </div>
                         </template>
-                        <template v-if="parameterField.type === 'checkbox'">
+                        <template v-else-if="parameterField.type === 'checkbox'">
                             <input
                                 type="checkbox"
                                 class="checkbox"
-                                :disabled="disabled"
-                                :checked="checked"
-                                v-model="parameterField.value"
-                                @change="handleChange"
+                                v-model="value[section.id || sectionIndex][parameterField.id]"
                                 @click.stop
                             />
                         </template>
@@ -45,18 +42,31 @@
                                 :type="parameterField.type"
                                 class="w-full form-control form-input form-control-bordered"
                                 :class="errorClasses"
-                                v-model="parameterField.value"
+                                v-model="value[section.id || sectionIndex][parameterField.id]"
                                 :required="parameterField.required"
                                 :placeholder="parameterField.placeholder"
                             />
                         </template>
-
-                        <p v-if="hasError" class="my-2 text-danger">
-                            {{ firstError }}
-                        </p>
                     </template>
                 </DefaultField>
             </div>
+        </div>
+
+        <div class="text-center">
+            <p v-if="hasError" class="my-2 text-red-500 mb-2">
+                {{ firstError }}
+            </p>
+
+            <button
+                v-if="this.field.repeatable && this.fields.length > 0"
+                type="button"
+                class="border text-left appearance-none cursor-pointer rounded text-sm font-bold focus:outline-none focus:ring ring-primary-200 dark:ring-gray-600 relative disabled:cursor-not-allowed inline-flex items-center justify-center shadow h-9 px-3 bg-primary-500 border-primary-500 hover:[&amp;:not(:disabled)]:bg-primary-400 hover:[&amp;:not(:disabled)]:border-primary-400 text-white dark:text-gray-900"
+                @click="addSection"
+            >
+                <span class="flex items-center gap-1">
+                    Pridať položku
+                </span>
+            </button>
         </div>
     </div>
 </template>
@@ -64,6 +74,7 @@
 <script>
 import { DependentFormField, HandlesValidationErrors } from 'laravel-nova'
 import {isString} from "lodash";
+import {toRaw} from "vue";
 
 export default {
     mixins: [DependentFormField, HandlesValidationErrors],
@@ -72,108 +83,110 @@ export default {
 
     data() {
         return {
-            values: [],
+            loaded: false,
+            repeatCount: 1,
+            sections: [],
+            value: {},
         };
     },
 
-    computed: {
-        value() {
-            return this.getValues()
-        },
-        sections() {
-            console.log('this.currentField.value', this.currentField.value)
-            let originalValues = this.currentField.value;
-
-            if (isString(originalValues)) {
-                originalValues = JSON.parse(originalValues)
+    watch: {
+        fields(oldFields, newFields) {
+            const noChange = JSON.stringify(oldFields) === JSON.stringify(newFields);
+            if (noChange) {
+                return;
             }
 
+            this.value = {};
+            this.sections = [];
+
+            if (!this.currentField.repeatable) {
+                this.getSections();
+            }
+        },
+    },
+
+    computed: {
+        fields() {
+            return this.currentField.fields;
+        },
+    },
+
+    methods: {
+        getSections() {
             let sections = [];
 
             if (this.currentField.asModels) {
                 for (let i = 0; i < this.currentField.fields.length; i++) {
-                    let model = this.currentField.fields[i]
+                    const model = this.currentField.fields[i]
 
-                    for (let j = 0; j < model.fields.length; j++) {
-                        model.fields[j].value = ''
-                        if (model.fields[j].type === 'select') {
-                            model.fields[j].value = null
-                        }
-                        if (model.fields[j].type === 'checkbox') {
-                            model.fields[j].value = false
-                        }
-
-                        let modelValue = originalValues?.[model.id];
-
-                        console.log('model', model)
-                        console.log('modelValue', modelValue)
-                        console.log('originalValues', originalValues)
-
-                        let value = undefined
-
-                        if (isString(modelValue)) {
-                            value = JSON.parse(modelValue)?.[model.fields[j].id]
-                        }
-
-                        if (value !== undefined) {
-                            model.fields[j].value = value
-                        }
-                    }
-
-                    sections.push({
-                        id: model.id,
-                        name: model.name,
-                        fields: model.fields,
-                    })
-                }
-                return sections
-            }
-
-            let fields = this.currentField.fields
-
-            for (let i = 0; i < fields.length; i++) {
-                fields[i].value = ''
-                if (fields[i].type === 'select') {
-                    fields[i].value = null
-                }
-                if (fields[i].type === 'checkbox') {
-                    fields[i].value = false
-                }
-
-                if (originalValues !== null && originalValues[fields[i].id] !== undefined) {
-                    fields[i].value = originalValues[fields[i].id]
-                }
-            }
-
-            sections.push({fields: this.currentField.fields})
-
-            return sections
-        }
-    },
-
-    methods: {
-        getValues() {
-            let data = []
-
-            for (let i = 0; i < this.sections.length; i++) {
-                let section = this.sections[i];
-
-                data[i] = {
-                    sectionId: section.id,
-                    sectionName: section.name,
-                }
-                for (let j = 0; j < section.fields.length; j++) {
-                    let field = section.fields[j]
-
-                    data[i][field.id] = field.value
+                    sections = this.createSection(sections, model.id, model.name, model.fields);
                 }
             }
 
             if (!this.currentField.asModels) {
-                data = data[0]
+                if (this.currentField.repeatable) {
+                    for (let j = 0; j < this.repeatCount; j++) {
+                        sections = this.createSection(sections, j, j + 1);
+                    }
+                }
+
+                if (!this.currentField.repeatable) {
+                    sections = this.createSection(sections, 0);
+                }
             }
 
-            return data
+            this.sections = sections;
+            this.loaded = true;
+        },
+
+        createSection(sections, sectionId, sectionName, fields) {
+            fields = fields || this.currentField.fields;
+
+            let value = {};
+
+            if (this.currentField.value !== undefined) {
+                value = this.currentField.value;
+
+                if (this.currentField.asModels) {
+                    value = value[sectionId]?.values || {}
+                }
+                else if (this.currentField.repeatable) {
+                    console.log('value', value)
+                    if (value === null) {
+                        value = [{}];
+                    }
+                    console.log('value', value)
+                    value = value[0] || {};
+                }
+            }
+
+            if (value === null) {
+                value = {};
+            }
+
+            for (let i = 0; i < fields.length; i++) {
+                if (value[fields[i].id] === undefined) {
+                    value[fields[i].id] = null;
+                }
+            }
+
+            console.log('fields', fields)
+
+            this.value[sectionId] = value
+
+            let any = {
+                id: sectionId,
+                name: sectionName,
+                fields: fields,
+            };
+            sections.push(any);
+
+            return sections;
+        },
+
+        addSection() {
+            this.sections = this.createSection(this.sections, this.sections.length, this.sections.length + 1);
         },
 
         /*
@@ -189,6 +202,8 @@ export default {
             this.values = value ?? []
 
             this.fields = this.currentField.fields
+
+            this.getSections();
         },
 
         currentFieldFor(parameterField) {
@@ -203,6 +218,8 @@ export default {
                 new_field.required = parameterField['required']
             }
 
+            new_field.validationKey = new_field.validationKey + '_' + parameterField.id;
+
             return new_field
         },
 
@@ -210,9 +227,17 @@ export default {
         * Fill the given FormData object with the field's internal value.
         */
         fill(formData) {
-            this.value = JSON.stringify(this.getValues());
+            let value = this.value;
 
-            formData.append(this.currentField.attribute, this.value || null)
+            if (!this.field.asModels && !this.field.repeatable) {
+                value = value[0];
+            }
+
+            value = JSON.stringify(value);
+
+            console.log('stringify value', value)
+
+            formData.append(this.currentField.attribute, value || null)
         },
     },
 }

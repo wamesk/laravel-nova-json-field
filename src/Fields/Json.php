@@ -98,4 +98,18 @@ class Json extends Field
             'repeatable' => $repeatable,
         ]);
     }
+
+    public function addButton(string $title): self
+    {
+        return $this->withMeta([
+            'addButtonTitle' => $title,
+        ]);
+    }
+
+    public function hideSectionName(): Json
+    {
+        return $this->withMeta([
+            'hideSectionName' => true,
+        ]);
+    }
 }

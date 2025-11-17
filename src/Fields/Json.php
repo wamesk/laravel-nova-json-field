@@ -6,7 +6,6 @@ use JsonException;
 use Laravel\Nova\Exceptions\HelperNotSupported;
 use Laravel\Nova\Exceptions\NovaException;
 use Laravel\Nova\Fields\Field;
-use Laravel\Nova\Fields\ResourceRelationshipGuesser;
 use Laravel\Nova\Fields\SupportsDependentFields;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
@@ -14,25 +13,10 @@ class Json extends Field
 {
     use SupportsDependentFields;
 
-    /**
-     * The resource class for the json field.
-     *
-     * @var $resourceClass ?string
-     */
     public ?string $resourceClass;
 
-    /**
-     * The resource name for the json field.
-     *
-     * @var $resourceName ?string
-     */
     public ?string $resourceName;
 
-    /**
-     * The field's component.
-     *
-     * @var string
-     */
     public $component = 'laravel-nova-json-field';
 
     public function __construct($name, $attribute = null, ?callable $resolveCallback = null)

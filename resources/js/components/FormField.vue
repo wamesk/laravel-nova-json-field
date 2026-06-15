@@ -76,8 +76,6 @@
 
 <script>
 import { DependentFormField, HandlesValidationErrors } from 'laravel-nova'
-import {isString} from "lodash";
-import {toRaw} from "vue";
 
 export default {
     mixins: [DependentFormField, HandlesValidationErrors],
@@ -94,12 +92,15 @@ export default {
     },
 
     watch: {
-        fields(oldFields, newFields) {
-            const noChange = JSON.stringify(oldFields) === JSON.stringify(newFields);
-            if (noChange) {
+        fields(newFields, oldFields) {
+            const ids = (fields) => JSON.stringify((fields || []).map(f => f.id).sort());
+            const same = ids(newFields) === ids(oldFields);
+            console.log('[JsonField] watch.fields fired - same structure:', same, '| old ids:', ids(oldFields), '| new ids:', ids(newFields));
+            if (same) {
                 return;
             }
 
+            console.log('[JsonField] watch.fields - resetting value, currentField.value:', JSON.parse(JSON.stringify(this.currentField.value ?? null)));
             this.value = {};
             this.sections = [];
 
@@ -155,16 +156,14 @@ export default {
                     value = value[sectionId]?.values || {}
                 }
                 else if (this.currentField.repeatable) {
-                    console.log('value', value)
                     if (value === null) {
                         value = [{}];
                     }
-                    console.log('value', value)
                     value = value[0] || {};
                 }
             }
 
-            if (value === null) {
+            if (value === null || Array.isArray(value)) {
                 value = {};
             }
 
@@ -174,8 +173,7 @@ export default {
                 }
             }
 
-            console.log('fields', fields)
-
+            console.log('[JsonField] createSection - sectionId:', sectionId, '| value set:', JSON.parse(JSON.stringify(value)));
             this.value[sectionId] = value
 
             let any = {
@@ -201,16 +199,7 @@ export default {
         * Set the initial, internal value for the field.
         */
         setInitialValue() {
-            let value = this.field.value
-
-            if (isString(value)) {
-                value = JSON.parse(value)
-            }
-
-            this.values = value ?? []
-
-            this.fields = this.currentField.fields
-
+            console.log('[JsonField] setInitialValue - currentField.value:', JSON.parse(JSON.stringify(this.currentField.value ?? null)), 'fields count:', this.currentField.fields?.length);
             this.getSections();
         },
 
@@ -235,15 +224,17 @@ export default {
         * Fill the given FormData object with the field's internal value.
         */
         fill(formData) {
+            console.log('[JsonField] fill - this.value:', JSON.parse(JSON.stringify(this.value)));
+
             let value = this.value;
 
             if (!this.field.asModels && !this.field.repeatable) {
+                console.log('[JsonField] fill - picking value[0]:', JSON.parse(JSON.stringify(value[0] ?? null)));
                 value = value[0];
             }
 
             value = JSON.stringify(value);
-
-            console.log('stringify value', value)
+            console.log('[JsonField] fill - sending:', value, '| attribute:', this.currentField.attribute);
 
             formData.append(this.currentField.attribute, value || null)
         },
